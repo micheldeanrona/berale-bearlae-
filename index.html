@@ -21,7 +21,8 @@
         .win-anim { animation: winPulse 0.6s ease-in-out infinite; color: #d4af37 !important; }
         @keyframes winPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         .stat-card { background: white; border-radius: 2rem; padding: 1.25rem; border: 1px solid rgba(0,0,0,0.03); }
-        .tab-btn.active { background-color: #630f00; color: white; }
+        .tab-btn { background: transparent; color: #57534e; transition: all 0.2s ease; }
+        .tab-btn.active { background-color: #630f00 !important; color: white !important; shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
     </style>
 </head>
 <body class="pb-10 pt-4">
@@ -38,8 +39,8 @@
         </header>
 
         <div class="flex bg-stone-200/60 p-1 rounded-2xl gap-1">
-            <button onclick="switchTab('game')" id="tab-game" class="tab-btn active flex-1 py-2.5 text-xs font-bold rounded-xl transition-all text-stone-600">לוח משחק</button>
-            <button onclick="switchTab('stats')" id="tab-stats" class="tab-btn flex-1 py-2.5 text-xs font-bold rounded-xl transition-all text-stone-600">אנליטיקה ונתונים</button>
+            <button onclick="switchTab('game')" id="tab-game" class="tab-btn active flex-1 py-2.5 text-xs font-bold rounded-xl">לוח משחק</button>
+            <button onclick="switchTab('stats')" id="tab-stats" class="tab-btn flex-1 py-2.5 text-xs font-bold rounded-xl">אנליטיקה ונתונים</button>
         </div>
 
         <div id="view-game" class="space-y-6">
@@ -77,89 +78,3 @@
                     </button>
                 </div>
             </section>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div class="stat-card flex flex-col items-center justify-center text-center">
-                    <p class="text-[9px] uppercase font-black text-stone-400 mb-2 tracking-tighter">רצף נוכחי</p>
-                    <p id="streak-val" class="text-4xl font-black text-[#630f00]">0</p>
-                    <p id="streak-name" class="text-[10px] font-bold text-stone-400 mt-1">-</p>
-                </div>
-                <div class="stat-card flex flex-col items-center justify-center">
-                    <p class="text-[9px] uppercase font-black text-stone-400 mb-2 tracking-tighter">אחוזי הצלחה</p>
-                    <div class="flex gap-4 w-full justify-around mt-1">
-                        <div>
-                            <p id="wr-omri" class="text-lg font-black text-[#630f00]">0%</p>
-                            <p class="text-[8px] font-bold opacity-40">עמרי</p>
-                        </div>
-                        <div class="w-[1px] bg-stone-100"></div>
-                        <div>
-                            <p id="wr-elinor" class="text-lg font-black text-stone-300">0%</p>
-                            <p class="text-[8px] font-bold opacity-40">אלינור</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <section class="px-2">
-                <h3 class="font-noto italic text-lg border-b border-stone-200 pb-2 mb-4 text-center">The Chronicles</h3>
-                <div id="history-container" class="space-y-3"></div>
-                <div id="show-more-box" class="text-center mt-4 hidden">
-                    <button onclick="toggleHistory()" id="btn-toggle-history" class="text-xs font-bold text-[#630f00] bg-stone-100 px-4 py-2 rounded-full">הצג את כל ההיסטוריה המלאה</button>
-                </div>
-            </section>
-        </div>
-
-        <div id="view-stats" class="space-y-6 hidden">
-            <div class="stat-card space-y-4">
-                <h4 class="text-xs font-extrabold text-[#630f00] border-b pb-2 tracking-wider uppercase">🏆 שיאים היסטוריים</h4>
-                <div class="flex justify-between items-center text-sm">
-                    <span class="text-stone-500 font-medium">רצף הניצחונות הגבוה ביותר אי פעם:</span>
-                    <span id="stat-max-streak" class="font-black text-[#630f00]">0 משחקים (-)</span>
-                </div>
-                <div class="flex justify-between items-center text-sm">
-                    <span class="text-stone-500 font-medium">מלך המרסים הרשמי:</span>
-                    <span id="stat-mars-king" class="font-bold text-stone-700">-</span>
-                </div>
-                <div class="flex justify-between items-center text-sm">
-                    <span class="text-stone-500 font-medium">השליט הטורקי (הכי הרבה טורקי):</span>
-                    <span id="stat-turk-king" class="font-bold text-stone-700">-</span>
-                </div>
-            </div>
-
-            <div class="stat-card space-y-3 bg-amber-50/40">
-                <div class="flex justify-between items-center border-b pb-1">
-                    <h4 class="text-sm font-black text-[#630f00]">עמרי - ניתוח ביצועים</h4>
-                    <span id="detail-sets-omri" class="text-xs font-bold text-stone-500">0 סטים</span>
-                </div>
-                <div class="grid grid-cols-3 gap-2 text-center">
-                    <div class="bg-white p-2 rounded-xl border border-stone-100">
-                        <p class="text-[10px] text-stone-400 font-bold">רגיל (+1)</p>
-                        <p id="stat-omri-r" class="text-base font-bold text-stone-700">0</p>
-                    </div>
-                    <div class="bg-white p-2 rounded-xl border border-stone-100">
-                        <p class="text-[10px] text-stone-400 font-bold">מרס (+2)</p>
-                        <p id="stat-omri-m" class="text-base font-bold text-[#630f00]">0</p>
-                    </div>
-                    <div class="bg-white p-2 rounded-xl border border-stone-100">
-                        <p class="text-[10px] text-stone-400 font-bold">טורקי (+3)</p>
-                        <p id="stat-omri-t" class="text-base font-bold text-amber-600">0</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="stat-card space-y-3 bg-stone-50">
-                <div class="flex justify-between items-center border-b pb-1">
-                    <h4 class="text-sm font-black text-stone-700">אלינור - ניתוח ביצועים</h4>
-                    <span id="detail-sets-elinor" class="text-xs font-bold text-stone-400">0 סטים</span>
-                </div>
-                <div class="grid grid-cols-3 gap-2 text-center">
-                    <div class="bg-white p-2 rounded-xl border border-stone-100">
-                        <p class="text-[10px] text-stone-400 font-bold">רגיל (+1)</p>
-                        <p id="stat-elinor-r" class="text-base font-bold text-stone-700">0</p>
-                    </div>
-                    <div class="bg-white p-2 rounded-xl border border-stone-100">
-                        <p class="text-[10px] text-stone-400 font-bold">מרס (+2)</p>
-                        <p id="stat-elinor-m" class="text-base font-bold text-[#630f00]">0</p>
-                    </div>
-                    <div class="bg-white p-2 rounded-xl border border-stone-100">
-                        <p class="text-[10px] text-stone
