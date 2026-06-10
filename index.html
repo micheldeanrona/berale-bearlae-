@@ -21,8 +21,6 @@
         .win-anim { animation: winPulse 0.6s ease-in-out infinite; color: #d4af37 !important; }
         @keyframes winPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         .stat-card { background: white; border-radius: 2rem; padding: 1.25rem; border: 1px solid rgba(0,0,0,0.03); }
-        .tab-btn { background: #e7e2da; color: #78716c; font-weight: bold; border-radius: 1rem; transition: all 0.2s; }
-        .tab-btn.active { background: #630f00 !important; color: white !important; }
     </style>
 </head>
 <body class="pb-10 pt-4">
@@ -38,31 +36,162 @@
             </div>
         </header>
 
-        <div class="grid grid-cols-2 gap-2 bg-stone-200/50 p-1 rounded-2xl">
-            <button onclick="switchTab('game')" id="tab-game" class="tab-btn active py-3 text-xs">לוח משחק</button>
-            <button onclick="switchTab('stats')" id="tab-stats" class="tab-btn py-3 text-xs">אנליטיקה ונתונים</button>
+        <section class="bg-[#e7e2da] rounded-[3.5rem] p-1.5 shadow-2xl">
+            <div class="bg-[#f8f3eb] rounded-[3.2rem] p-8 relative overflow-hidden text-center">
+                <div class="flex justify-between items-stretch gap-6">
+                    <div class="flex-1 flex flex-col items-center">
+                        <p class="text-[10px] font-extrabold text-stone-400 mb-2 uppercase tracking-widest">עמרי</p>
+                        <p id="live-omri" class="font-noto text-8xl font-bold text-[#630f00] leading-none mb-6">0</p>
+                        <div class="space-y-2 w-full">
+                            <button onclick="addPoints('omri', 1)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm">+1 רגיל</button>
+                            <button onclick="addPoints('omri', 2)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm">+2 מרס</button>
+                            <button onclick="addPoints('omri', 3)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm bg-amber-50 border-amber-100">+3 טורקי</button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col justify-center opacity-10">
+                        <div class="h-full w-[1px] bg-stone-400 mx-auto"></div>
+                        <span class="font-noto italic text-xl my-4">vs</span>
+                        <div class="h-full w-[1px] bg-stone-400 mx-auto"></div>
+                    </div>
+
+                    <div class="flex-1 flex flex-col items-center">
+                        <p class="text-[10px] font-extrabold text-stone-400 mb-2 uppercase tracking-widest">אלינור</p>
+                        <p id="live-elinor" class="font-noto text-8xl font-bold text-stone-300 leading-none mb-6">0</p>
+                        <div class="space-y-2 w-full">
+                            <button onclick="addPoints('elinor', 1)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm">+1 רגיל</button>
+                            <button onclick="addPoints('elinor', 2)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm">+2 מרס</button>
+                            <button onclick="addPoints('elinor', 3)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm bg-amber-50 border-amber-200">+3 טורקי</button>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="undo()" class="mt-6 text-stone-300 hover:text-stone-500 transition-colors">
+                    <span class="material-symbols-outlined text-lg">undo</span>
+                </button>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div class="stat-card flex flex-col items-center justify-center text-center">
+                <p class="text-[9px] uppercase font-black text-stone-400 mb-2 tracking-tighter">רצף ניצחונות</p>
+                <p id="streak-val" class="text-4xl font-black text-[#630f00]">0</p>
+                <p id="streak-name" class="text-[10px] font-bold text-stone-400 mt-1">-</p>
+            </div>
+            <div class="stat-card flex flex-col items-center justify-center">
+                <p class="text-[9px] uppercase font-black text-stone-400 mb-2 tracking-tighter">אחוזי הצלחה</p>
+                <div class="flex gap-4 w-full justify-around mt-1">
+                    <div>
+                        <p id="wr-omri" class="text-xl font-black text-[#630f00]">0%</p>
+                        <p class="text-[8px] font-bold opacity-40">עמרי</p>
+                    </div>
+                    <div class="w-[1px] bg-stone-100"></div>
+                    <div>
+                        <p id="wr-elinor" class="text-xl font-black text-stone-300">0%</p>
+                        <p class="text-[8px] font-bold opacity-40">אלינור</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div id="view-game" class="space-y-6 block">
-            <section class="bg-[#e7e2da] rounded-[3.5rem] p-1.5 shadow-2xl">
-                <div class="bg-[#f8f3eb] rounded-[3.2rem] p-8 relative overflow-hidden text-center">
-                    <div class="flex justify-between items-stretch gap-6">
-                        <div class="flex-1 flex flex-col items-center">
-                            <p class="text-[10px] font-extrabold text-stone-400 mb-2 uppercase tracking-widest">עמרי</p>
-                            <p id="live-omri" class="font-noto text-8xl font-bold text-[#630f00] leading-none mb-6">0</p>
-                            <div class="space-y-2 w-full">
-                                <button onclick="addPoints('omri', 1)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm">+1 רגיל</button>
-                                <button onclick="addPoints('omri', 2)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm">+2 מרס</button>
-                                <button onclick="addPoints('omri', 3)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm bg-amber-50 border-amber-200">+3 טורקי</button>
-                            </div>
-                        </div>
-                        
-                        <div class="flex flex-col justify-center opacity-10">
-                            <div class="h-full w-[1px] bg-stone-400 mx-auto"></div>
-                            <span class="font-noto italic text-xl my-4">vs</span>
-                            <div class="h-full w-[1px] bg-stone-400 mx-auto"></div>
-                        </div>
+        <section class="px-2">
+            <h3 class="font-noto italic text-lg border-b border-stone-200 pb-2 mb-4 text-center">The Chronicles</h3>
+            <div id="history-container" class="space-y-3"></div>
+            
+            <div id="show-more-box" class="text-center mt-4 hidden">
+                <button onclick="toggleHistory()" id="btn-toggle-history" class="text-xs font-bold text-[#630f00] bg-stone-100 px-4 py-2 rounded-full hover:bg-stone-200 transition-colors">
+                    הצג את כל ההיסטוריה המלאה
+                </button>
+            </div>
+        </section>
+    </div>
 
-                        <div class="flex-1 flex flex-col items-center">
-                            <p class="text-[10px] font-extrabold text-stone-400 mb-2 uppercase tracking-widest">אלינור</p>
-                            <p id="live-elinor" class="font-noto text-8xl font-bold text-stone-
+    <script>
+        // שימוש במפתח הישן כדי לשמור על כל המידע שכבר קיים בטלפון שלכם
+        let db = JSON.parse(localStorage.getItem('backgammon_v_pro_final')) || JSON.parse(localStorage.getItem('backgammon_v_final_v3')) || {
+            match: { omri: 0, elinor: 0 },
+            totalSets: { omri: 0, elinor: 0 },
+            history: [],
+            streak: { player: null, count: 0 },
+            prevMatch: null
+        };
+
+        let showAllHistory = false;
+
+        async function requestWakeLock() {
+            try { if ('wakeLock' in navigator) { await navigator.wakeLock.request('screen'); document.getElementById('wakeLockBtn').style.opacity = "1"; } } catch (e) {}
+        }
+        requestWakeLock();
+
+        function addPoints(p, pts) {
+            db.prevMatch = JSON.parse(JSON.stringify(db.match));
+            db.match[p] += pts;
+            render();
+            
+            if (db.match[p] >= 5) {
+                const el = document.getElementById(`live-${p}`);
+                el.classList.add('win-anim');
+                setTimeout(() => { 
+                    el.classList.remove('win-anim');
+                    finalizeSet(p); 
+                }, 1000);
+            }
+        }
+
+        function finalizeSet(w) {
+            if (db.streak.player === w) { db.streak.count++; } else { db.streak.player = w; db.streak.count = 1; }
+            db.totalSets[w]++;
+            db.history.unshift({ 
+                date: new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'}) + " " + new Date().toLocaleDateString('he-IL'), 
+                score: `${db.match.omri}-${db.match.elinor}`, 
+                winner: w === 'omri' ? 'עמרי' : 'אלינור' 
+            });
+            db.match = { omri: 0, elinor: 0 };
+            db.prevMatch = null;
+            render();
+        }
+
+        function undo() { if (db.prevMatch) { db.match = JSON.parse(JSON.stringify(db.prevMatch)); db.prevMatch = null; render(); } }
+
+        function toggleHistory() {
+            showAllHistory = !showAllHistory;
+            document.getElementById('btn-toggle-history').innerText = showAllHistory ? "הצג פחות (חזרה ל-5 האחרונים)" : "הצג את כל ההיסטוריה המלאה";
+            render();
+        }
+
+        function render() {
+            document.getElementById('live-omri').innerText = db.match.omri;
+            document.getElementById('live-elinor').innerText = db.match.elinor;
+            document.getElementById('live-omri').style.color = db.match.omri >= db.match.elinor ? '#630f00' : '#d6d3d1';
+            document.getElementById('live-elinor').style.color = db.match.elinor >= db.match.omri ? '#630f00' : '#d6d3d1';
+            
+            const total = db.totalSets.omri + db.totalSets.elinor;
+            document.getElementById('wr-omri').innerText = total > 0 ? Math.round((db.totalSets.omri / total) * 100) + "%" : "0%";
+            document.getElementById('wr-elinor').innerText = total > 0 ? Math.round((db.totalSets.elinor / total) * 100) + "%" : "0%";
+            
+            document.getElementById('streak-val').innerText = db.streak.count;
+            document.getElementById('streak-name').innerText = db.streak.player ? (db.streak.player === 'omri' ? 'עמרי בטירוף' : 'אלינור בטירוף') : '-';
+            
+            const historyToDisplay = showAllHistory ? db.history : db.history.slice(0, 5);
+            
+            document.getElementById('history-container').innerHTML = historyToDisplay.map(h => `
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-stone-50 flex justify-between items-center">
+                    <span class="text-[9px] font-black opacity-20">${h.date}</span>
+                    <span class="font-bold text-xs">${h.winner} לקח/ה סט</span>
+                    <span class="font-noto font-bold text-[#630f00] text-lg">${h.score}</span>
+                </div>`).join('');
+            
+            const showMoreBox = document.getElementById('show-more-box');
+            if (db.history.length > 5) {
+                showMoreBox.classList.remove('hidden');
+            } else {
+                showMoreBox.classList.add('hidden');
+            }
+            
+            localStorage.setItem('backgammon_v_pro_final', JSON.stringify(db));
+        }
+
+        function clearAllData() { if(confirm("לאפס את כל הנתונים?")) { db = { match: { omri: 0, elinor: 0 }, totalSets: { omri: 0, elinor: 0 }, history: [], streak: { player: null, count: 0 }, prevMatch: null }; render(); } }
+        render();
+    </script>
+</body>
+</html>
