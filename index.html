@@ -21,8 +21,8 @@
         .win-anim { animation: winPulse 0.6s ease-in-out infinite; color: #d4af37 !important; }
         @keyframes winPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         .stat-card { background: white; border-radius: 2rem; padding: 1.25rem; border: 1px solid rgba(0,0,0,0.03); }
-        .tab-btn { background: transparent; color: #57534e; transition: all 0.2s ease; }
-        .tab-btn.active { background-color: #630f00 !important; color: white !important; shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .tab-btn { background: #e7e2da; color: #78716c; font-weight: bold; border-radius: 1rem; transition: all 0.2s; }
+        .tab-btn.active { background: #630f00 !important; color: white !important; }
     </style>
 </head>
 <body class="pb-10 pt-4">
@@ -38,12 +38,12 @@
             </div>
         </header>
 
-        <div class="flex bg-stone-200/60 p-1 rounded-2xl gap-1">
-            <button onclick="switchTab('game')" id="tab-game" class="tab-btn active flex-1 py-2.5 text-xs font-bold rounded-xl">לוח משחק</button>
-            <button onclick="switchTab('stats')" id="tab-stats" class="tab-btn flex-1 py-2.5 text-xs font-bold rounded-xl">אנליטיקה ונתונים</button>
+        <div class="grid grid-cols-2 gap-2 bg-stone-200/50 p-1 rounded-2xl">
+            <button onclick="switchTab('game')" id="tab-game" class="tab-btn active py-3 text-xs">לוח משחק</button>
+            <button onclick="switchTab('stats')" id="tab-stats" class="tab-btn py-3 text-xs">אנליטיקה ונתונים</button>
         </div>
 
-        <div id="view-game" class="space-y-6">
+        <div id="view-game" class="space-y-6 block">
             <section class="bg-[#e7e2da] rounded-[3.5rem] p-1.5 shadow-2xl">
                 <div class="bg-[#f8f3eb] rounded-[3.2rem] p-8 relative overflow-hidden text-center">
                     <div class="flex justify-between items-stretch gap-6">
@@ -53,7 +53,7 @@
                             <div class="space-y-2 w-full">
                                 <button onclick="addPoints('omri', 1)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm">+1 רגיל</button>
                                 <button onclick="addPoints('omri', 2)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm">+2 מרס</button>
-                                <button onclick="addPoints('omri', 3)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm bg-amber-50 border-amber-100">+3 טורקי</button>
+                                <button onclick="addPoints('omri', 3)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm bg-amber-50 border-amber-200">+3 טורקי</button>
                             </div>
                         </div>
                         
@@ -65,16 +65,4 @@
 
                         <div class="flex-1 flex flex-col items-center">
                             <p class="text-[10px] font-extrabold text-stone-400 mb-2 uppercase tracking-widest">אלינור</p>
-                            <p id="live-elinor" class="font-noto text-8xl font-bold text-stone-300 leading-none mb-6">0</p>
-                            <div class="space-y-2 w-full">
-                                <button onclick="addPoints('elinor', 1)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm">+1 רגיל</button>
-                                <button onclick="addPoints('elinor', 2)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm">+2 מרס</button>
-                                <button onclick="addPoints('elinor', 3)" class="btn-score py-4 rounded-2xl text-[11px] font-bold shadow-sm bg-amber-50 border-amber-200">+3 טורקי</button>
-                            </div>
-                        </div>
-                    </div>
-                    <button onclick="undo()" class="mt-6 text-stone-300 hover:text-stone-500 transition-colors">
-                        <span class="material-symbols-outlined text-lg">undo</span>
-                    </button>
-                </div>
-            </section>
+                            <p id="live-elinor" class="font-noto text-8xl font-bold text-stone-
