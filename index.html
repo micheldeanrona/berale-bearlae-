@@ -192,3 +192,127 @@
                 render(false);
                 
                 // האזנה לסנכרון חי בזמן אמת בין מכשירים
+                supabase.channel('cloud-sync')
+                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'backgammon_db' }, payload => {
+                        if(payload.new && payload.new.data) {
+                            db = payload.new.data;
+                            render(false);
+                        }
+                    }).subscribe();
+            } catch(e) {
+                console.log("Cloud error, using local fallback", e);
+                render(false);
+            }
+        }
+
+        async function saveToCloud() {
+            if(supabase) {
+                await supabase.from('backgammon_db').update({ data: db }).eq('id', 1);
+            }
+        }
+
+        async function requestWakeLock() {
+            try { if ('wakeLock' in navigator) { await navigator.wakeLock.request('screen'); document.getElementById('wakeLockBtn').style.opacity = "1"; } } catch (e) {}
+        }
+        requestWakeLock();
+
+        function switchTab(tabName) {
+            if (tabName === 'game') {
+                document.getElementById('view-game').style.display = 'block';
+                document.getElementById('view-stats').style.display = 'none';
+                document.getElementById('tab-game').classList.add('active');
+                document.getElementById('tab-stats').classList.remove('active');
+            } else {
+                document.getElementById('view-game').style.display = 'none';
+                document.getElementById('view-stats').style.display = 'block';
+                document.getElementById('tab-game').classList.remove('active');
+                document.getElementById('tab-stats').classList.add('active');
+            }
+        }
+
+        function addPoints(p, pts) {
+            db.prevMatch = JSON.parse(JSON.stringify(db.match));
+            db.match[p] += pts;
+            lastTypeAdded = { player: p, type: pts === 1 ? 'r' : (pts === 2 ? 'm' : 't') };
+            render(true);
+            
+            if (db.match[p] >= 5) {
+                const el = document.getElementById(`live-${p}`);
+                el.classList.add('win-anim');
+                setTimeout(() => { el.classList.remove('win-anim'); finalizeSet(p); }, 1000);
+            }
+        }
+
+        function finalizeSet(w) {
+            if (db.streak.player === w) { db.streak.count++; } else { db.streak.player = w; db.streak.count = 1; }
+            if (db.streak.count > db.maxStreak.count) { db.maxStreak.count = db.streak.count; db.maxStreak.player = w; }
+            if (lastTypeAdded && lastTypeAdded.player === w) { db.breakdown[w][lastTypeAdded.type]++; } else { db.breakdown[w]['r']++; }
+
+            db.totalSets[w]++;
+            db.history.unshift({ 
+                date: new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'}) + " " + new Date().toLocaleDateString('he-IL'), 
+                score: `${db.match.omri}-${db.match.elinor}`, winner: w === 'omri' ? 'עמרי' : 'אלינור' 
+            });
+            db.match = { omri: 0, elinor: 0 };
+            db.prevMatch = null;
+            lastTypeAdded = null;
+            render(true);
+        }
+
+        function undo() { if (db.prevMatch) { db.match = JSON.parse(JSON.stringify(db.prevMatch)); db.prevMatch = null; lastTypeAdded = null; render(true); } }
+        function toggleHistory() { showAllHistory = !showAllHistory; render(false); }
+
+        function render(shouldUpload = true) {
+            document.getElementById('live-omri').innerText = db.match.omri;
+            document.getElementById('live-elinor').innerText = db.match.elinor;
+            
+            const total = db.totalSets.omri + db.totalSets.elinor;
+            const wrO = total > 0 ? Math.round((db.totalSets.omri / total) * 100) : 0;
+            const wrE = total > 0 ? Math.round((db.totalSets.elinor / total) * 100) : 0;
+            document.getElementById('wr-omri').innerHTML = `${wrO}% <span class="text-[10px] block opacity-50 font-normal">(${db.totalSets.omri} סטים)</span>`;
+            document.getElementById('wr-elinor').innerHTML = `${wrE}% <span class="text-[10px] block opacity-50 font-normal">(${db.totalSets.elinor} סטים)</span>`;
+            
+            document.getElementById('streak-val').innerText = db.streak.count;
+            document.getElementById('streak-name').innerText = db.streak.player ? (db.streak.player === 'omri' ? 'עמרי בטירוף' : 'אלינור בטירוף') : '-';
+            
+            document.getElementById('detail-sets-omri').innerText = `${db.totalSets.omri} סטים`;
+            document.getElementById('detail-sets-elinor').innerText = `${db.totalSets.elinor} סטים`;
+            document.getElementById('stat-omri-r').innerText = db.breakdown.omri.r;
+            document.getElementById('stat-omri-m').innerText = db.breakdown.omri.m;
+            document.getElementById('stat-omri-t').innerText = db.breakdown.omri.t;
+            document.getElementById('stat-elinor-r').innerText = db.breakdown.elinor.r;
+            document.getElementById('stat-elinor-m').innerText = db.breakdown.elinor.m;
+            document.getElementById('stat-elinor-t').innerText = db.breakdown.elinor.t;
+
+            if (db.maxStreak && db.maxStreak.count > 0) {
+                document.getElementById('stat-max-streak').innerText = `${db.maxStreak.count} משחקים (${db.maxStreak.player === 'omri' ? 'עמרי' : 'אלינור'})`;
+            }
+            if (db.breakdown.omri.m > db.breakdown.elinor.m) document.getElementById('stat-mars-king').innerText = `עמרי (${db.breakdown.omri.m})`;
+            else if (db.breakdown.elinor.m > db.breakdown.omri.m) document.getElementById('stat-mars-king').innerText = `אלינור (${db.breakdown.elinor.m})`;
+            if (db.breakdown.omri.t > db.breakdown.elinor.t) document.getElementById('stat-turk-king').innerText = `עמרי (${db.breakdown.omri.t})`;
+            else if (db.breakdown.elinor.t > db.breakdown.omri.t) document.getElementById('stat-turk-king').innerText = `אלינור (${db.breakdown.elinor.t})`;
+            
+            const historyToDisplay = showAllHistory ? db.history : db.history.slice(0, 5);
+            document.getElementById('history-container').innerHTML = historyToDisplay.map(h => `
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-stone-50 flex justify-between items-center">
+                    <span class="text-[9px] font-black opacity-20">${h.date}</span>
+                    <span class="font-bold text-xs">${h.winner} לקח/ה סט</span>
+                    <span class="font-noto font-bold text-[#630f00] text-lg">${h.score}</span>
+                </div>`).join('');
+            
+            document.getElementById('show-more-box').classList.toggle('hidden', db.history.length <= 5);
+            document.getElementById('btn-toggle-history').innerText = showAllHistory ? "הצג פחות" : "הצג את כל ההיסטוריה המלאה";
+            
+            if (shouldUpload) saveToCloud();
+        }
+
+        async function clearAllData() { 
+            if(confirm("לאפס את כל הנתונים בענן?")) { 
+                db = { match: { omri: 0, elinor: 0 }, totalSets: { omri: 0, elinor: 0 }, history: [], streak: { player: null, count: 0 }, maxStreak: { player: null, count: 0 }, breakdown: { omri: { r: 0, m: 0, t: 0 }, elinor: { r: 0, m: 0, t: 0 } }, prevMatch: null }; 
+                render(true); 
+            } 
+        }
+        initCloud();
+    </script>
+</body>
+</html>
