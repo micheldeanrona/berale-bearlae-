@@ -11,6 +11,7 @@
 
     <title>Backgammon Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,700;1,700&family=Manrope:wght@400;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
     <style>
@@ -172,24 +173,43 @@
     </div>
 
     <script>
-        let db = JSON.parse(localStorage.getItem('backgammon_v_pro_final')) || {
-            match: { omri: 0, elinor: 0 },
-            totalSets: { omri: 0, elinor: 0 },
-            history: [],
-            streak: { player: null, count: 0 },
-            maxStreak: { player: null, count: 0 }, 
-            breakdown: {
-                omri: { r: 0, m: 0, t: 0 },
-                elinor: { r: 0, m: 0, t: 0 }
-            },
-            prevMatch: null
-        };
-
-        if (!db.maxStreak) db.maxStreak = { player: null, count: 0 };
-        if (!db.breakdown) db.breakdown = { omri: { r: 0, m: 0, t: 0 }, elinor: { r: 0, m: 0, t: 0 } };
-
+        const SUPABASE_URL = "https://syqrjhphergsdueunqkb.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5cXJqaHBoZXJnc2R1ZXVucWtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzA5ODgsImV4cCI6MjA5Njc0Njk4OH0.vlhXc1hoiz0LtPV35lwPUCZ6w6OD72NFeIzIuE_wlE0";
+        
+        let supabase;
+        let db = { match: { omri: 0, elinor: 0 }, totalSets: { omri: 0, elinor: 0 }, history: [], streak: { player: null, count: 0 }, maxStreak: { player: null, count: 0 }, breakdown: { omri: { r: 0, m: 0, t: 0 }, elinor: { r: 0, m: 0, t: 0 } }, prevMatch: null };
+        
         let showAllHistory = false;
         let lastTypeAdded = null;
+
+        async function initCloud() {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                let { data, error } = await supabase.from('backgammon_db').select('data').eq('id', 1).single();
+                if (data && data.data) { 
+                    db = data.data; 
+                }
+                render(false);
+                
+                // האזנה לסנכרון חי בזמן אמת בין מכשירים
+                supabase.channel('cloud-sync')
+                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'backgammon_db' }, payload => {
+                        if(payload.new && payload.new.data) {
+                            db = payload.new.data;
+                            render(false);
+                        }
+                    }).subscribe();
+            } catch(e) {
+                console.log("Cloud error, using local fallback", e);
+                render(false);
+            }
+        }
+
+        async function saveToCloud() {
+            if(supabase) {
+                await supabase.from('backgammon_db').update({ data: db }).eq('id', 1);
+            }
+        }
 
         async function requestWakeLock() {
             try { if ('wakeLock' in navigator) { await navigator.wakeLock.request('screen'); document.getElementById('wakeLockBtn').style.opacity = "1"; } } catch (e) {}
@@ -214,15 +234,12 @@
             db.prevMatch = JSON.parse(JSON.stringify(db.match));
             db.match[p] += pts;
             lastTypeAdded = { player: p, type: pts === 1 ? 'r' : (pts === 2 ? 'm' : 't') };
-            render();
+            render(true);
             
             if (db.match[p] >= 5) {
                 const el = document.getElementById(`live-${p}`);
                 el.classList.add('win-anim');
-                setTimeout(() => { 
-                    el.classList.remove('win-anim');
-                    finalizeSet(p); 
-                }, 1000);
+                setTimeout(() => { el.classList.remove('win-anim'); finalizeSet(p); }, 1000);
             }
         }
 
@@ -234,19 +251,18 @@
             db.totalSets[w]++;
             db.history.unshift({ 
                 date: new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'}) + " " + new Date().toLocaleDateString('he-IL'), 
-                score: `${db.match.omri}-${db.match.elinor}`, 
-                winner: w === 'omri' ? 'עמרי' : 'אלינור' 
+                score: `${db.match.omri}-${db.match.elinor}`, winner: w === 'omri' ? 'עמרי' : 'אלינור' 
             });
             db.match = { omri: 0, elinor: 0 };
             db.prevMatch = null;
             lastTypeAdded = null;
-            render();
+            render(true);
         }
 
-        function undo() { if (db.prevMatch) { db.match = JSON.parse(JSON.stringify(db.prevMatch)); db.prevMatch = null; lastTypeAdded = null; render(); } }
-        function toggleHistory() { showAllHistory = !showAllHistory; render(); }
+        function undo() { if (db.prevMatch) { db.match = JSON.parse(JSON.stringify(db.prevMatch)); db.prevMatch = null; lastTypeAdded = null; render(true); } }
+        function toggleHistory() { showAllHistory = !showAllHistory; render(false); }
 
-        function render() {
+        function render(shouldUpload = true) {
             document.getElementById('live-omri').innerText = db.match.omri;
             document.getElementById('live-elinor').innerText = db.match.elinor;
             
@@ -287,11 +303,16 @@
             document.getElementById('show-more-box').classList.toggle('hidden', db.history.length <= 5);
             document.getElementById('btn-toggle-history').innerText = showAllHistory ? "הצג פחות" : "הצג את כל ההיסטוריה המלאה";
             
-            localStorage.setItem('backgammon_v_pro_final', JSON.stringify(db));
+            if (shouldUpload) saveToCloud();
         }
 
-        function clearAllData() { if(confirm("לאפס הכל?")) { db = { match: { omri: 0, elinor: 0 }, totalSets: { omri: 0, elinor: 0 }, history: [], streak: { player: null, count: 0 }, maxStreak: { player: null, count: 0 }, breakdown: { omri: { r: 0, m: 0, t: 0 }, elinor: { r: 0, m: 0, t: 0 } }, prevMatch: null }; render(); } }
-        render();
+        async function clearAllData() { 
+            if(confirm("לאפס את כל הנתונים בענן?")) { 
+                db = { match: { omri: 0, elinor: 0 }, totalSets: { omri: 0, elinor: 0 }, history: [], streak: { player: null, count: 0 }, maxStreak: { player: null, count: 0 }, breakdown: { omri: { r: 0, m: 0, t: 0 }, elinor: { r: 0, m: 0, t: 0 } }, prevMatch: null }; 
+                render(true); 
+            } 
+        }
+        initCloud();
     </script>
 </body>
 </html>
